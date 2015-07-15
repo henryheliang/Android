@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
@@ -60,7 +62,7 @@ public class OrderAdapter extends ArrayAdapter<Order> {
         TextView txtPayment = (TextView)view.findViewById( R.id.txtPayment );
         LinearLayout layoutControl = (LinearLayout)view.findViewById( R.id.layoutControl );
         Button   btnAction = (Button)view.findViewById( R.id.btnAction );
-        Button   btnModify = (Button)view.findViewById( R.id.btnModify );
+        //Button   btnModify = (Button)view.findViewById( R.id.btnModify );
         Button   btnCancel = (Button)view.findViewById( R.id.btnCancel );
         Button   btnPhoneCall = (Button)view.findViewById( R.id.btnPhoneCall );
 
@@ -116,9 +118,11 @@ public class OrderAdapter extends ArrayAdapter<Order> {
         }
 
         if( position == orderActivity.mCurrentPostion ) {
-            layoutControl.setVisibility( View.VISIBLE );
+            if( layoutControl.getVisibility() == View.GONE )
+                layoutControl.setVisibility( View.VISIBLE );
         }else{
-            layoutControl.setVisibility( View.GONE );
+            if( layoutControl.getVisibility() == View.VISIBLE )
+                layoutControl.setVisibility( View.GONE );
         }
 
         //开始/完成配送的按键事件:

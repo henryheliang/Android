@@ -10,9 +10,11 @@ import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
@@ -23,6 +25,7 @@ import android.widget.TabHost;
 import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -49,35 +52,100 @@ import java.util.Map;
 
 public class OrderActivity extends AppCompatActivity {
 
-    private TabHost             tabHost;
-    private TabWidget           tabWidget;
-    private ListView            listView;
-    private List<Order>         orders;
-    private OrderAdapter        adapter;
-    private RequestQueue        mQueue;
-    private String              mURL;
-    private String              loginID;
-    private int                 mOrderType;
-    public  int                 mCurrentPostion;
-    public  static final int    ORDER_TYPE_NEW      = 1;
-    public  static final int    ORDER_TYPE_ACCEPT   = 2;
-    public  static final int    ORDER_TYPE_EXPRESS  = 3;
-    public  static final int    ORDER_TYPE_CANCEL   = 0;
-    private static final int    INVALID_POSITION    = -1;
+    private TabHost tabHost;
+    private TabWidget tabWidget;
+    private ListView listView;
+    private List<Order> orders;
+    private OrderAdapter adapter;
+    private RequestQueue mQueue;
+    private GestureDetector mDetector;
+    private String mURL;
+    private String loginID;
+    private int mOrderType;
+    public int mCurrentPostion;
+    public static final int ORDER_TYPE_NEW = 1;
+    public static final int ORDER_TYPE_ACCEPT = 2;
+    public static final int ORDER_TYPE_EXPRESS = 3;
+    public static final int ORDER_TYPE_CANCEL = 0;
+    private static final int INVALID_POSITION = -1;
 
     //初始化变量以及控件：
     private void init() {
 
+        //初始化手势控件:
+        mDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                                   float velocityY) {
+
+                if(e1.getX()-e2.getX()>120){ //向左滑动:
+                    if( mOrderType < ORDER_TYPE_EXPRESS ) {
+                        ++mOrderType;
+                        tabHost.setCurrentTab( mOrderType-1 );
+                    }
+                } else if (e1.getX()-e2.getX()<-120){ //向右滑动:
+                    if( mOrderType > ORDER_TYPE_NEW ) {
+                        --mOrderType;
+                        tabHost.setCurrentTab( mOrderType-1 );
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+                                    float distanceY) {
+                // TODO Auto-generated method stub
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+        });
+
         //初始化列表：
-        listView = (ListView)findViewById( R.id.listOrder );
+        listView = (ListView) findViewById(R.id.listOrder);
         orders = new ArrayList<Order>();
 
+        //让主视图手势控件接管列表手势消息处理:
+        listView.setOnTouchListener( new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mDetector.onTouchEvent(event);
+                return false;
+            }
+        });
+
         //初始化列表适配器：
-        adapter = new OrderAdapter( this, R.layout.activity_order_item, orders );
+        adapter = new OrderAdapter(this, R.layout.activity_order_item, orders);
         adapter.orderActivity = this;
 
         //列表加载适配器：
-        listView.setAdapter( adapter );
+        listView.setAdapter(adapter);
 
         //设定初始化用户列表选择位置：
         mCurrentPostion = INVALID_POSITION;
@@ -94,6 +162,20 @@ public class OrderActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
+
+        //初始化Tab控件并处理切换事件:
+        initTabHost();
+
+        //设定服务器HTTP URL 字符串：
+        mURL = getString(R.string.server_url);
+
+        //添加Sever交互服务：
+        mQueue = Volley.newRequestQueue(this);
+
+    }
+
+    //初始化 TabHost 控件以及处理相关事件:
+    private void initTabHost() {
 
         //初始化Tab选项：
         tabHost = (TabHost) this.findViewById(R.id.tabHost);
@@ -122,18 +204,13 @@ public class OrderActivity extends AppCompatActivity {
             @Override
             public void onTabChanged(String tabId) {
 
-                if( "tab_1".equals(tabId) ) mOrderType = ORDER_TYPE_NEW;
-                else if( "tab_2".equals(tabId) ) mOrderType = ORDER_TYPE_ACCEPT;
-                else if( "tab_3".equals(tabId) ) mOrderType = ORDER_TYPE_EXPRESS;
-                loadOrderList( mOrderType );
+                if ("tab_1".equals(tabId)) mOrderType = ORDER_TYPE_NEW;
+                else if ("tab_2".equals(tabId)) mOrderType = ORDER_TYPE_ACCEPT;
+                else if ("tab_3".equals(tabId)) mOrderType = ORDER_TYPE_EXPRESS;
+                loadOrderList(mOrderType);
             }
         });
 
-        //设定服务器HTTP URL 字符串：
-        mURL = getString( R.string.server_url );
-
-        //添加Sever交互服务：
-        mQueue = Volley.newRequestQueue(this);
     }
 
     //处理所有 URL POST 返回数据解析
@@ -338,6 +415,11 @@ public class OrderActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public boolean onTouchEvent( MotionEvent event ) {
+        return mDetector.onTouchEvent( event );
+    }
+
     //响应页面跳转返回事件:
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data ) {
@@ -376,4 +458,5 @@ public class OrderActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
 }

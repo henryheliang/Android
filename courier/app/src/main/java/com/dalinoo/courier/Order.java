@@ -37,8 +37,8 @@ public class Order {
         ++hours;
 
         //填充时间字符串：（处理10点以内的一位数数据需要补充0）
-        if( hours < 10 ) timeString = dateFormat.format( expressTime ) + " - 0" + (hours+1) + ":00";
-        else timeString = dateFormat.format( expressTime ) + " - " + (hours+1) + ":00";
+        if( hours < 10 ) timeString = dateFormat.format( expressTime ) + " - 0" + hours + ":00";
+        else timeString = dateFormat.format( expressTime ) + " - " + hours + ":00";
     }
 
 }
