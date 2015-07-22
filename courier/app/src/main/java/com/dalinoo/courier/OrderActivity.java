@@ -1,6 +1,7 @@
 package com.dalinoo.courier;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +42,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -59,8 +62,9 @@ public class OrderActivity extends AppCompatActivity {
     private OrderAdapter adapter;
     private RequestQueue mQueue;
     private GestureDetector mDetector;
-    private String mURL;
     private String loginID;
+    private String mDeviceToken;
+    private PostParameter mPP;
     private int mOrderType;
     public int mCurrentPostion;
     public static final int ORDER_TYPE_NEW = 1;
@@ -71,6 +75,9 @@ public class OrderActivity extends AppCompatActivity {
 
     //初始化变量以及控件：
     private void init() {
+
+        //初始化Post 参数工具实例：
+        mPP = new PostParameter( this );
 
         //初始化手势控件:
         mDetector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
@@ -165,9 +172,6 @@ public class OrderActivity extends AppCompatActivity {
 
         //初始化Tab控件并处理切换事件:
         initTabHost();
-
-        //设定服务器HTTP URL 字符串：
-        mURL = getString(R.string.server_url);
 
         //添加Sever交互服务：
         mQueue = Volley.newRequestQueue(this);
@@ -318,7 +322,10 @@ public class OrderActivity extends AppCompatActivity {
     //发送HTTP POST 刷新订单请求：
     private void loadOrderList( final int nType ) {
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, mURL,
+        //创建参数列表：
+        final Map<String, String> map = mPP.getListParameters(mDeviceToken, loginID, nType);
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, mPP.getURL(),
                 new Response.Listener<String>() {
 
                     //监听 HTTP POST - REPONSE 事件：
@@ -340,10 +347,6 @@ public class OrderActivity extends AppCompatActivity {
             //添加Post参数列表：
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put( getString(R.string.url_command), getString(R.string.url_list) );
-                map.put( getString(R.string.url_status), String.valueOf(nType) );
-                map.put( getString(R.string.url_loginid), loginID );
                 return map;
             }
         };
@@ -353,9 +356,12 @@ public class OrderActivity extends AppCompatActivity {
     }
 
     //发送HTTP POST 更新订单请求：
-    public void updateOrder( final String strID, final int nStatus ) {
+    public void updateOrder( final String strOrderID, final int nStatus ) {
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, mURL,
+        //创建参数列表：
+        final Map<String, String> map = mPP.getUpdateParameters(mDeviceToken, loginID, strOrderID, nStatus);
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, mPP.getURL(),
                 new Response.Listener<String>() {
 
                     //监听 HTTP POST - RESPONSE 事件：
@@ -376,11 +382,6 @@ public class OrderActivity extends AppCompatActivity {
             //添加 POST 参数列表：
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put( getString(R.string.url_command), getString(R.string.url_update) );
-                map.put( getString(R.string.url_status), String.valueOf(nStatus) );
-                map.put( getString(R.string.url_loginid), loginID );
-                map.put( getString(R.string.url_orderid), strID );
                 return map;
             }
         };
@@ -402,7 +403,7 @@ public class OrderActivity extends AppCompatActivity {
         mPushAgent.enable();
 
         //参看当前设备 Device-Token 信息：
-        //String device_token = UmengRegistrar.getRegistrationId(this);
+        mDeviceToken = UmengRegistrar.getRegistrationId(this);
         //Log.d( "TAG", "Device Token: " + device_token );
 
         //初始化页面：
@@ -410,8 +411,9 @@ public class OrderActivity extends AppCompatActivity {
 
         //默认跳转到登录页面：
         Intent intent = new Intent();
-        intent.setClass( this, LoginActivity.class );
-        startActivityForResult(intent, 0);
+        intent.putExtra( getString(R.string.url_devicetoken), mDeviceToken );
+        intent.setClass(this, LoginActivity.class);
+        startActivityForResult( intent, 0 );
 
     }
 

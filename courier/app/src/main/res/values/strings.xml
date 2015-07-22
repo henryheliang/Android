@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Courier</string>
-
+    <string name="app_key">dalin.tech.2015.courier</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="txt_login_name">用户名</string>
@@ -36,6 +36,7 @@
     <string name="url_status">orderstatus</string>
     <string name="url_loginid">loginid</string>
     <string name="url_orderid">orderid</string>
+    <string name="url_devicetoken">devicetoken</string>
     <string name="profile_username">username</string>
     <string name="profile_password">password</string>
     <string name="profile_autologin">autologin</string>

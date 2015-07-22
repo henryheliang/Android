@@ -28,6 +28,8 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,23 +42,24 @@ public class LoginActivity extends AppCompatActivity {
     private CheckBox chkRememberPassword;
 
     private RequestQueue mQueue;
-    private SharedPreferences sp;
-    private String  mURL;
+    private SharedPreferences mSP;
+    private String  mDeviceToken;
+    private PostParameter mPP;
 
     //初始化页面控件：
     private void init() {
 
+        //创建POST参数工具类实例:
+        mPP = new PostParameter( this );
+
         //加载预配置信息:
-        sp = getSharedPreferences( getString(R.string.app_name), MODE_PRIVATE);
+        mSP = getSharedPreferences( getString(R.string.app_name), MODE_PRIVATE);
 
         btnLogin = (Button)findViewById( R.id.btn_login );
         txtName = (EditText)findViewById( R.id.txt_login_name );
         txtPassword = (EditText)findViewById( R.id.txt_login_password );
         chkAutoLogin = (CheckBox)findViewById( R.id.chk_auto_login );
         chkRememberPassword = (CheckBox)findViewById( R.id.chk_remember_password );
-
-        //加载HTTP POST 地址信息：
-        mURL = getString(R.string.server_url );
 
         //创建HTTP 网络序列：
         mQueue = Volley.newRequestQueue(this);
@@ -66,13 +69,13 @@ public class LoginActivity extends AppCompatActivity {
     private void loadPrfile() {
 
         //用户名：
-        txtName.setText( sp.getString( getString(R.string.profile_username), "" ) );
+        txtName.setText( mSP.getString( getString(R.string.profile_username), "" ) );
         //密码:
-        txtPassword.setText( sp.getString( getString(R.string.profile_password), "" ) );
+        txtPassword.setText( mSP.getString( getString(R.string.profile_password), "" ) );
         //自动登录：
-        chkAutoLogin.setChecked( sp.getBoolean( getString(R.string.profile_autologin), false ) );
+        chkAutoLogin.setChecked( mSP.getBoolean( getString(R.string.profile_autologin), false ) );
         //记住密码：
-        chkRememberPassword.setChecked( sp.getBoolean( getString(R.string.profile_rememberpassword), false ) );
+        chkRememberPassword.setChecked( mSP.getBoolean( getString(R.string.profile_rememberpassword), false ) );
 
         //检查是否记住密码：
         if( !chkRememberPassword.isChecked() ){
@@ -102,7 +105,7 @@ public class LoginActivity extends AppCompatActivity {
     private void saveProfile() {
 
 
-        SharedPreferences.Editor editor = sp.edit();
+        SharedPreferences.Editor editor = mSP.edit();
 
         //存储用户名：
         editor.putString( getString(R.string.profile_username), txtName.getText().toString() );
@@ -124,8 +127,12 @@ public class LoginActivity extends AppCompatActivity {
         //发送数据过程中禁用发送按钮避免重复发送请求：
         btnLogin.setEnabled( false );
 
+        //创建参数列表：
+        final Map<String, String> map = mPP.getLoginParameters( mDeviceToken,
+                txtName.getText().toString(), txtPassword.getText().toString() );
+
         //发送请求：
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, mURL,
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, mPP.getURL(),
                 new Response.Listener<String>() {
                     //处理数据响应：
                     @Override
@@ -146,10 +153,6 @@ public class LoginActivity extends AppCompatActivity {
             //添加POST参数列表：
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put(getString(R.string.url_command), getString(R.string.url_login) );
-                map.put(getString(R.string.profile_username), txtName.getText().toString() );
-                map.put(getString(R.string.profile_password), txtPassword.getText().toString() );
                 return map;
             }
         };
@@ -228,6 +231,9 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        Intent intent = getIntent();
+        mDeviceToken = intent.getStringExtra( getString(R.string.url_devicetoken) );
 
         //初始化控件：
         init();
