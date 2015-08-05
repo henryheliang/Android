@@ -32,6 +32,10 @@
             android:name=".LoginActivity"
             android:label="@string/title_activity_login" >
         </activity>
+        <activity
+            android:name="com.umeng.update.UpdateDialogActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+        </activity>
 
         <receiver
             android:name="com.umeng.message.NotificationProxyBroadcastReceiver"
@@ -108,6 +112,10 @@
             <intent-filter>
                 <action android:name="org.android.agoo.client.ElectionReceiverService" />
             </intent-filter>
+        </service>
+        <service
+            android:name="com.umeng.update.net.DownloadingService"
+            android:process=":DownloadingService" >
         </service>
 
         <meta-data

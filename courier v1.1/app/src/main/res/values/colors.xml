@@ -1,0 +1,16 @@
+<resources>
+
+    <color name="black_overlay">#66000000</color>
+    <color name="express_normal_background">#00BFFF</color>
+    <color name="express_intime_background">#228B22</color>
+    <color name="express_overtime_background">#B22222</color>
+    <color name="main_item_shadow">#000000</color>
+    <color name="btn_action">#006400</color>
+    <color name="btn_cancel">#8B0000</color>
+    <color name="btn_modify">#00008B</color>
+    <color name="btn_phonecall">#8B008B</color>
+    <color name="title_backgroud">#00BFFF</color>
+    <color name="pay_type_online">#006400</color>
+    <color name="pay_type_offline">#8B0000</color>
+
+</resources>

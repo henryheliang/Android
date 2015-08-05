@@ -37,6 +37,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.umeng.message.PushAgent;
 import com.umeng.message.UmengRegistrar;
+import com.umeng.update.UmengUpdateAgent;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -70,6 +71,7 @@ public class OrderActivity extends AppCompatActivity {
     public static final int ORDER_TYPE_NEW = 1;
     public static final int ORDER_TYPE_ACCEPT = 2;
     public static final int ORDER_TYPE_EXPRESS = 3;
+    public static final int ORDER_TYPE_BALANCE = 4;
     public static final int ORDER_TYPE_CANCEL = 0;
     private static final int INVALID_POSITION = -1;
 
@@ -87,7 +89,7 @@ public class OrderActivity extends AppCompatActivity {
                                    float velocityY) {
 
                 if(e1.getX()-e2.getX()>120){ //向左滑动:
-                    if( mOrderType < ORDER_TYPE_EXPRESS ) {
+                    if( mOrderType < ORDER_TYPE_BALANCE) {
                         ++mOrderType;
                         tabHost.setCurrentTab( mOrderType-1 );
                     }
@@ -165,8 +167,14 @@ public class OrderActivity extends AppCompatActivity {
                 //记录用户选择列表项：
                 mCurrentPostion = position;
 
-                //通知适配器更新列表数据：
-                adapter.notifyDataSetChanged();
+                //如果之前没有加载过订单详情列表，发起订单详情 HTTP POST:
+                if( orders.get( mCurrentPostion).items.size() == 0 ) {
+                    orderDetail(orders.get(mCurrentPostion).orderID);
+                } else {
+
+                    //通知适配器更新列表数据：
+                    adapter.notifyDataSetChanged();
+                }
             }
         });
 
@@ -190,6 +198,7 @@ public class OrderActivity extends AppCompatActivity {
         tabHost.addTab(tabHost.newTabSpec("tab_1").setContent(R.id.tab1).setIndicator(getString(R.string.tab_1)));
         tabHost.addTab(tabHost.newTabSpec("tab_2").setContent(R.id.tab1).setIndicator(getString(R.string.tab_2)));
         tabHost.addTab(tabHost.newTabSpec("tab_3").setContent(R.id.tab1).setIndicator(getString(R.string.tab_3)));
+        tabHost.addTab(tabHost.newTabSpec("tab_4").setContent(R.id.tab1).setIndicator(getString(R.string.tab_4)));
 
         //默认定位到第一个Tab项:
         tabHost.setCurrentTab(0);
@@ -211,9 +220,157 @@ public class OrderActivity extends AppCompatActivity {
                 if ("tab_1".equals(tabId)) mOrderType = ORDER_TYPE_NEW;
                 else if ("tab_2".equals(tabId)) mOrderType = ORDER_TYPE_ACCEPT;
                 else if ("tab_3".equals(tabId)) mOrderType = ORDER_TYPE_EXPRESS;
+                else if ("tab_4".equals(tabId)) mOrderType = ORDER_TYPE_BALANCE;
                 loadOrderList(mOrderType);
             }
         });
+
+    }
+
+    //设置 Tab 标题文字:
+    private void setTabText( int nIndex, String strExtra ) {
+
+        //准备Tab项文字信息：
+        String strContent = "";
+        switch ( mOrderType ) {
+            case ORDER_TYPE_NEW:
+                strContent = getString( R.string.tab_1 );
+                break;
+            case ORDER_TYPE_ACCEPT:
+                strContent = getString( R.string.tab_2 );
+                break;
+            case ORDER_TYPE_EXPRESS:
+                strContent = getString( R.string.tab_3 );
+                break;
+            case ORDER_TYPE_BALANCE:
+                strContent = getString( R.string.tab_4 );
+            default:
+        }
+
+        //设定当前Tab项文字
+        if( strExtra.equals("") ) {
+            ((TextView)tabWidget.getChildAt(nIndex).findViewById(android.R.id.title)).setText(strContent);
+        } else {
+            ((TextView)tabWidget.getChildAt(nIndex).findViewById(android.R.id.title)).setText(strContent + strExtra);
+        }
+    }
+
+    //处理 Update 消息：
+    private void onUpdate() {
+
+        //发起重新刷新列表请求：
+        loadOrderList( mOrderType );
+        return;
+    }
+
+    //处理 List 消息:
+    private void onList( JSONObject json ) {
+
+        try{
+
+            //清除所有列表项并重置用户现在位置：
+            orders.removeAll(orders);
+            mCurrentPostion = INVALID_POSITION;
+
+            //返回0条记录时：
+            if( json.get( getString(R.string.url_data) ) == JSONObject.NULL ){
+
+                //通知适配器更新数据：
+                adapter.notifyDataSetChanged();
+
+                //设定当前Tab项文字
+                setTabText( mOrderType-1, "" );
+                return;
+            }
+
+            //解析JSON数据集：
+            JSONArray subJsons = json.getJSONArray( getString(R.string.url_data) );
+            for( int i=0; i<subJsons.length(); i++ ) {
+
+                //读取一项数据集：
+                JSONObject item = subJsons.getJSONObject( i );
+
+                //填充订单实例数据项：
+                Order newOrder =  new Order();
+                newOrder.mobileNo = item.getString(getString(R.string.json_element_mobile_no));
+                newOrder.orderID = item.getString(getString(R.string.json_element_order_id));
+                newOrder.payment = item.getDouble(getString(R.string.json_element_order_amount));
+                newOrder.payType = item.getInt(getString(R.string.json_element_order_type));
+                newOrder.userName = item.getString(getString(R.string.json_element_user_name));
+                newOrder.expressPrice = item.getDouble(getString(R.string.json_element_express_price));
+                //设定时间字符串格式：
+                DateFormat dateFormat = new SimpleDateFormat(  getString(R.string.date_format) );
+                newOrder.orderTime = dateFormat.parse( item.getString(getString(R.string.json_element_order_time)) );
+                newOrder.expressTime = dateFormat.parse( item.getString(getString(R.string.json_element_send_time)) );
+                newOrder.location = item.getString(getString(R.string.json_element_location_name));
+                newOrder.address = item.getString(getString(R.string.json_element_address_info));
+                newOrder.status = mOrderType;
+
+                //设定配送时间字符串：
+                newOrder.setTimeString();
+
+                //订单实例添加到订单列表：
+                orders.add( newOrder );
+            }
+
+            //通知适配器刷新列表：
+            adapter.notifyDataSetChanged();
+
+            //更新Tab项显示带有订单数量的动态标题：
+            setTabText( mOrderType-1, " (" + subJsons.length() + ")" );
+        } catch ( JSONException e ) {
+
+            //捕获JSON数据解析异常：
+            Toast.makeText( this, getString(R.string.content_json_error),Toast.LENGTH_SHORT ).show();
+            System.out.println("Json parse error");
+            e.printStackTrace();
+        } catch (ParseException e) {
+
+            //捕获时间字符串解析异常：
+            Toast.makeText( this, getString(R.string.content_dateFormat_error),Toast.LENGTH_SHORT ).show();
+            e.printStackTrace();
+        }
+    }
+
+    private void onDetail( JSONObject json ) {
+
+        try{
+
+            //返回0条记录时：
+            if( json.get( getString(R.string.url_data) ) == JSONObject.NULL ){
+
+                //读取订单详情失败：
+                Toast.makeText( this, getString(R.string.content_detail_error),Toast.LENGTH_SHORT ).show();
+                return;
+            }
+
+            //解析JSON数据集：
+            JSONArray subJsons = json.getJSONArray( getString(R.string.url_data) );
+            for( int i=0; i<subJsons.length(); i++ ) {
+
+                //读取一项数据集：
+                JSONObject item = subJsons.getJSONObject( i );
+
+                //填充订单实例数据项：
+                OrderItem newItem =  new OrderItem();
+                newItem.itemName = item.getString(getString(R.string.json_element_item_name));
+                newItem.itemCount = item.getString(getString(R.string.json_element_item_count));
+                newItem.itemAmount = item.getDouble(getString(R.string.json_element_item_amount));
+
+                //订单详情实例添加到订单详情列表：
+                orders.get(mCurrentPostion).items.add( newItem );
+            }
+
+            //通知适配器刷新列表：
+            adapter.notifyDataSetChanged();
+
+        } catch ( JSONException e ) {
+
+            //捕获JSON数据解析异常：
+            Toast.makeText( this, getString(R.string.content_json_error),Toast.LENGTH_SHORT ).show();
+            System.out.println("Json parse error");
+            e.printStackTrace();
+        }
 
     }
 
@@ -225,96 +382,29 @@ public class OrderActivity extends AppCompatActivity {
             JSONObject json = new JSONObject( data );
             String strCommand = json.getString( getString(R.string.url_command));
 
-            //准备Tab项文字信息：
-            String strContent = "";
-            switch ( mOrderType ) {
-                case ORDER_TYPE_NEW:
-                    strContent = getString( R.string.tab_1 );
-                    break;
-                case ORDER_TYPE_ACCEPT:
-                    strContent = getString( R.string.tab_2 );
-                    break;
-                case ORDER_TYPE_EXPRESS:
-                    strContent = getString( R.string.tab_3 );
-                    break;
-                default:
-            }
-
             //处理"update"命令事务：
             if( strCommand.equals( getString( R.string.url_update ) ) ) {
 
-                //发起重新刷新列表请求：
-                loadOrderList( mOrderType );
+                onUpdate();
+                return;
+            }
+
+            //处理"detail"命令事务:
+            if( strCommand.equals( getString( R.string.url_detail ) ) ) {
+                onDetail( json );
                 return;
             }
 
             //处理"list"命令事务:
             if( strCommand.equals( getString(R.string.url_list) ) ) {
-
-                //清除所有列表项并重置用户现在位置：
-                orders.removeAll(orders);
-                mCurrentPostion = INVALID_POSITION;
-
-                //返回0条记录时：
-                if( json.get( getString(R.string.url_data) ) == JSONObject.NULL ){
-
-                    //通知适配器更新数据：
-                    adapter.notifyDataSetChanged();
-
-                    //设定当前Tab项文字
-                    ((TextView)tabWidget.getChildAt(mOrderType-1).findViewById(android.R.id.title)).setText(strContent);
-                    //Toast.makeText(this, strContent + ": 0", Toast.LENGTH_SHORT ).show();
-                    return;
-                }
-
-                //解析JSON数据集：
-                JSONArray subJsons = json.getJSONArray( "data" );
-                for( int i=0; i<subJsons.length(); i++ ) {
-
-                    //读取一项数据集：
-                    JSONObject item = subJsons.getJSONObject( i );
-
-                    //填充订单实例数据项：
-                    Order newOrder =  new Order();
-                    newOrder.mobileNo = item.getString("mobile_no");
-                    newOrder.orderID = item.getString("order_id");
-                    newOrder.payment = item.getDouble( "order_amount");
-                    newOrder.payType = item.getInt("order_type");
-                    newOrder.userName = item.getString("user_name");
-                    //设定时间字符串格式：
-                    DateFormat dateFormat = new SimpleDateFormat(  getString(R.string.date_format) );
-                    newOrder.orderTime = dateFormat.parse( item.getString("order_time") );
-                    newOrder.expressTime = dateFormat.parse( item.getString("send_time") );
-                    newOrder.location = item.getString("location_name");
-                    newOrder.address = item.getString("address_info");
-                    newOrder.status = mOrderType;
-
-                    //设定配送时间字符串：
-                    newOrder.setTimeString();
-
-                    //订单实例添加到订单列表：
-                    orders.add( newOrder );
-                }
-
-                //通知适配器刷新列表：
-                adapter.notifyDataSetChanged();
-
-                //更新Tab项显示带有订单数量的动态标题：
-                ((TextView)tabWidget.getChildAt(mOrderType-1).findViewById(android.R.id.title))
-                        .setText(strContent + " (" + subJsons.length() + ")");
-                //Toast.makeText(this, strContent + ": " + subJsons.length() , Toast.LENGTH_SHORT ).show();
+                onList( json );
             }
 
         } catch ( JSONException e ) {
 
             //捕获JSON数据解析异常：
-            Toast.makeText( this, "数据包解析错误，请稍后重试！",Toast.LENGTH_SHORT ).show();
+            Toast.makeText( this, getString(R.string.content_json_error),Toast.LENGTH_SHORT ).show();
             System.out.println("Json parse error");
-            e.printStackTrace();
-        } catch (ParseException e) {
-
-            //捕获时间字符串解析异常：
-            Toast.makeText( this, "时间字符串解析错误，请稍后重试！",Toast.LENGTH_SHORT ).show();
             e.printStackTrace();
         }
     }
@@ -341,7 +431,7 @@ public class OrderActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse( VolleyError error ) {
                 Log.e("TAG", error.getMessage(), error );
-                Toast.makeText( getApplicationContext(), "网络异常，请稍后重试！",  Toast.LENGTH_SHORT ).show();
+                Toast.makeText( getApplicationContext(), getString(R.string.content_network_error), Toast.LENGTH_SHORT ).show();
             }
         }) {
             //添加Post参数列表：
@@ -375,7 +465,7 @@ public class OrderActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse( VolleyError error ) {
                 Log.e("TAG", error.getMessage(), error );
-                Toast.makeText( getApplicationContext(), "网络异常，请稍后重试！",  Toast.LENGTH_SHORT ).show();
+                Toast.makeText( getApplicationContext(), getString(R.string.content_network_error),  Toast.LENGTH_SHORT ).show();
             }
         }) {
 
@@ -390,6 +480,44 @@ public class OrderActivity extends AppCompatActivity {
         mQueue.add(stringRequest);
     }
 
+    //发送HTTP POST 查看订单详情:
+    public void orderDetail( final String strOrderID ) {
+
+        //创建参数列表：
+        final Map<String, String> map = mPP.getDetailParameters(mDeviceToken, loginID, strOrderID );
+
+        Log.d( "TAG", mPP.toString() );
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, mPP.getURL(),
+                new Response.Listener<String>() {
+
+                    //监听 HTTP POST - RESPONSE 事件：
+                    @Override
+                    public void onResponse( String response ){
+                        onReceiveData( response );
+                    }
+                },new Response.ErrorListener() {
+
+            //监听 HTTP POST - ERROR 事件：
+            @Override
+            public void onErrorResponse( VolleyError error ) {
+                Log.e("TAG", error.getMessage(), error );
+                Toast.makeText( getApplicationContext(), getString(R.string.content_network_error), Toast.LENGTH_SHORT ).show();
+            }
+        }) {
+
+            //添加 POST 参数列表：
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                return map;
+            }
+        };
+
+        //将请求添加到HTTP发送序列中：
+        mQueue.add(stringRequest);
+
+    }
+
     //响应Activity 创建事件：
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -397,6 +525,13 @@ public class OrderActivity extends AppCompatActivity {
 
         //将Layout与Activiy实例捆绑:
         setContentView(R.layout.activity_order);
+
+        //注册友盟自动更新接口:
+
+        //允许在非WIFI网络环境进行更新:
+        UmengUpdateAgent.setUpdateOnlyWifi(false);
+        //检查版本更新:
+        UmengUpdateAgent.update(this);
 
         //注册友盟消息推送接口：
         PushAgent mPushAgent = PushAgent.getInstance(this);
@@ -429,7 +564,7 @@ public class OrderActivity extends AppCompatActivity {
 
         //成功返回存储当前登录者 ID 信息:
         if( resultCode == Activity.RESULT_OK ) {
-            loginID = data.getStringExtra("loginid");
+            loginID = data.getStringExtra(getString(R.string.url_loginid));
             loadOrderList( mOrderType );
 
         }else if(resultCode == Activity.RESULT_CANCELED ) {

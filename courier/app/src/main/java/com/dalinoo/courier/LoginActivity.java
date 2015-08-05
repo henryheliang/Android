@@ -144,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse( VolleyError error ) {
                 Log.e("TAG", error.getMessage(), error );
-                Toast.makeText( getApplicationContext(), "网络异常，请稍后重试！",  Toast.LENGTH_SHORT ).show();
+                Toast.makeText( getApplicationContext(), getString(R.string.content_network_error),  Toast.LENGTH_SHORT ).show();
 
                 //恢复登录按钮可用：
                 btnLogin.setEnabled( true );
@@ -167,7 +167,7 @@ public class LoginActivity extends AppCompatActivity {
         //检查用户名和密码是否为空：
         if( txtName.getText().toString().equals("") || txtPassword.getText().toString().equals( "" ) ){
 
-            Toast.makeText(this, "用户名或密码不能为空！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.content_invalidinput_error), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -188,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
             JSONObject subJson = json.getJSONObject( getString(R.string.url_data) );
             final String strID = subJson.getString( getString(R.string.url_loginid) );
 
-            Toast.makeText( this, "登录成功", Toast.LENGTH_SHORT).show();
+            Toast.makeText( this, getString(R.string.content_login_succeed), Toast.LENGTH_SHORT).show();
             saveProfile();
 
             //将用户ID信息返回主窗口：
@@ -206,7 +206,7 @@ public class LoginActivity extends AppCompatActivity {
             chkAutoLogin.setChecked( false );
 
             //统一处理用户名或密码错误返回信息：
-            Toast.makeText( this, "用户名或密码错误，请重新输入！",Toast.LENGTH_SHORT ).show();
+            Toast.makeText( this, getString(R.string.content_invalidinput_error),Toast.LENGTH_SHORT ).show();
             System.out.println("Json parse error");
             e.printStackTrace();
 

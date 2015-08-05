@@ -1,8 +1,15 @@
 package com.dalinoo.courier;
 
+import android.support.annotation.NonNull;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Created by Henry on 15/7/6.
@@ -24,6 +31,13 @@ public class Order {
     public String address;
     public int    status;
     public String timeString;
+    public double expressPrice;
+    public List<OrderItem> items;
+
+
+    Order() {
+        items = new ArrayList<OrderItem>();
+    }
 
     //设定配送时间字符串（配送时间为当前时间开始计算1小时内）
     void setTimeString() {
@@ -40,5 +54,4 @@ public class Order {
         if( hours < 10 ) timeString = dateFormat.format( expressTime ) + " - 0" + hours + ":00";
         else timeString = dateFormat.format( expressTime ) + " - " + hours + ":00";
     }
-
 }

@@ -62,7 +62,7 @@ public class PostParameter {
         mMap.clear();
 
         //添加 设备 Token 参数：
-        mMap.put( mContext.getString(R.string.url_devicetoken), strDeviceToken );
+        mMap.put(mContext.getString(R.string.url_devicetoken), strDeviceToken);
 
         //添加 Login 命令 参数：
         mMap.put( mContext.getString(R.string.url_command), mContext.getString(R.string.url_login) );
@@ -104,13 +104,33 @@ public class PostParameter {
         mMap.clear();
 
         //添加 设备 Token 参数：
-        mMap.put( mContext.getString(R.string.url_devicetoken), strDeviceToken );
+        mMap.put(mContext.getString(R.string.url_devicetoken), strDeviceToken);
 
         //添加 Update 命令 参数：
         mMap.put( mContext.getString(R.string.url_command), mContext.getString(R.string.url_update) );
 
         //添加 更新 状态 参数：
         mMap.put( mContext.getString(R.string.url_status), String.valueOf(nStatus) );
+
+        //添加 用户 ID 参数：
+        mMap.put( mContext.getString(R.string.url_loginid), strLoginID );
+
+        //添加 订单 ID 参数：
+        mMap.put( mContext.getString(R.string.url_orderid), strOrderID );
+
+        return mMap;
+    }
+
+    //读取Order Detail 参数列表:
+    public Map<String, String> getDetailParameters( String strDeviceToken, String strLoginID, String strOrderID ) {
+        //清空Map实例：
+        mMap.clear();
+
+        //添加 设备 Token 参数：
+        mMap.put( mContext.getString(R.string.url_devicetoken), strDeviceToken );
+
+        //添加 Update 命令 参数：
+        mMap.put( mContext.getString(R.string.url_command), mContext.getString(R.string.url_detail) );
 
         //添加 用户 ID 参数：
         mMap.put( mContext.getString(R.string.url_loginid), strLoginID );

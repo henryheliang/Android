@@ -98,53 +98,70 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/layoutControl"
-        android:orientation="horizontal"
+        android:id="@+id/orderExtendLayout"
+        android:orientation="vertical"
         android:layout_marginTop="@dimen/button_margin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/btnPhoneCall"
-            android:textColor="@color/btn_phonecall"
-            android:layout_weight="1"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/orderDetailLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_phonecall"
-            android:textStyle="bold"
-            android:layout_marginRight="@dimen/button_margin"
-            android:layout_marginLeft="@dimen/button_margin"/>
-        <Button
-            android:id="@+id/btnModify"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_modify"
-            android:textStyle="bold"
-            android:textColor="@color/btn_modify"
-            android:layout_marginRight="@dimen/button_margin"
-            android:layout_marginLeft="@dimen/button_margin"/>
-        <Button
-            android:id="@+id/btnCancel"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_cancel"
-            android:textStyle="bold"
-            android:textColor="@color/btn_cancel"
-            android:layout_marginRight="@dimen/button_margin"
-            android:layout_marginLeft="@dimen/button_margin"/>
-        <Button
-            android:layout_gravity="center_vertical"
-            android:id="@+id/btnAction"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textColor="@color/btn_action"
-            android:text="@string/btn_action_new"
-            android:textStyle="bold"
-            android:layout_marginRight="@dimen/button_margin"
-            android:layout_marginLeft="@dimen/button_margin"/>
+            android:orientation="vertical">
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/orderCommandLayout"
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/button_margin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/btnPhoneCall"
+                android:textColor="@color/btn_phonecall"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_phonecall"
+                android:textStyle="bold"
+                android:layout_marginRight="@dimen/button_margin"
+                android:layout_marginLeft="@dimen/button_margin"/>
+            <Button
+                android:id="@+id/btnModify"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_modify"
+                android:textStyle="bold"
+                android:textColor="@color/btn_modify"
+                android:layout_marginRight="@dimen/button_margin"
+                android:layout_marginLeft="@dimen/button_margin"/>
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_cancel"
+                android:textStyle="bold"
+                android:textColor="@color/btn_cancel"
+                android:layout_marginRight="@dimen/button_margin"
+                android:layout_marginLeft="@dimen/button_margin"/>
+            <Button
+                android:layout_gravity="center_vertical"
+                android:id="@+id/btnAction"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/btn_action"
+                android:text="@string/btn_action_new"
+                android:textStyle="bold"
+                android:layout_marginRight="@dimen/button_margin"
+                android:layout_marginLeft="@dimen/button_margin"/>
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

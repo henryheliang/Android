@@ -12,5 +12,7 @@
     <color name="title_backgroud">#00BFFF</color>
     <color name="pay_type_online">#006400</color>
     <color name="pay_type_offline">#8B0000</color>
+    <color name="title_balance">#0d7ccd</color>
+    <color name="detail_content">#B22222</color>
 
 </resources>
